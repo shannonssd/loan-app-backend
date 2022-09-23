@@ -1,0 +1,59 @@
+# docker-compose.yml
+version: "3.9"
+services:
+  web:
+    container_name: web
+    build: .
+    # TODO remove hard code sleep, it should use short sleep retry in entrypoint.sh
+    command: bash -c "sleep 15 && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code # mount current folder to /code folder in side a container
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - compose_network
+  db:
+    container_name: mysql-server
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/mysql_root_password"
+      MYSQL_USER: my-user
+      MYSQL_PASSWORD_FILE: "/run/secrets/mysql_password"
+      MYSQL_DATABASE: my-db
+    ports:
+      - 3306:3306
+    secrets:
+      - mysql_root_password
+      - mysql_password
+    healthcheck:
+      test: mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$(cat /run/secrets/mysql_password)
+      timeout: 10s
+      retries: 10
+    volumes:
+      # Use name volumes, managed by Docker for local development
+      - mysql-data:/var/lib/mysql
+      - mysql-logs:/var/log/mysql
+    command:
+      [
+        --character-set-server=utf8mb4,
+        --collation-server=utf8mb4_unicode_ci,
+        --lower-case-table-names=1,
+        --default-authentication-plugin=mysql_native_password
+      ]
+    networks:
+      - compose_network
+# https://docs.docker.com/compose/compose-file/compose-file-v3/#external-1
+volumes:
+  mysql-data:
+  mysql-logs:
+# https://serverfault.com/questions/871090/how-to-use-docker-secrets-without-a-swarm-cluster
+secrets:
+  mysql_root_password:
+    file: ./mysql_root_password.txt
+  mysql_password:
+    file: ./mysql_password.txt
+networks:
+  compose_network:
