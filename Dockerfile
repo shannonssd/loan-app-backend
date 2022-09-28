@@ -1,7 +1,9 @@
 # Dockerfile
-FROM python:3.9-alpine3.14
+FROM python:3.11.0rc2-bullseye
 # Set Python output is sent straight to terminal to see the output in realtime.
 ENV PYTHONUNBUFFERED=1
+COPY . /code
 WORKDIR /code
-COPY requirements.txt /code/
-RUN pip install -r requirements.txt
+RUN python -m pip install -r requirements.txt 
+RUN  python manage.py makemigrations 
+CMD ["python", "manage.py runserver"]
