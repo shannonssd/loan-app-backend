@@ -1,17 +1,17 @@
 from rest_framework import serializers
-from .models import LoanList, RepaymentSchedule
+from .models import Loan, Repayment
 
-class LoanListSerialzier(serializers.ModelSerializer):
+class LoanSerialzier(serializers.ModelSerializer):
     """Convert data between queryset and python dictionary data type for loan list data"""
 
     class Meta:
-        model = LoanList
+        model = Loan
         fields = '__all__'
 
 
-class RepaymentScheduleSerialzier(serializers.ModelSerializer):
+class RepaymentSerialzier(serializers.ModelSerializer):
     """Convert data between queryset and python dictionary data type for repayment schedule data"""
     
     class Meta:
-        model = RepaymentSchedule
+        model = Repayment
         fields = '__all__'

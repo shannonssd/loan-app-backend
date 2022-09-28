@@ -1,8 +1,12 @@
 from django.db import models
 
-class LoanList(models.Model):
+class Loan(models.Model):
     """Database model for individual loans"""
-    
+
+    # Customize database table name
+    class Meta:
+      db_table = 'loans'
+
     loan_amount = models.DecimalField(max_digits=21, decimal_places=6)
     loan_term = models.IntegerField()
     interest_rate = models.DecimalField(max_digits=21, decimal_places=6)
@@ -13,33 +17,18 @@ class LoanList(models.Model):
     # Automatically set the field to now every time the object is saved.
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Check if values are valid for individual fields
-    class Meta:
-        constraints = [
-          models.CheckConstraint(
-            check = models.Q(loan_amount__gte=1000) & models.Q(loan_amount__lte=100000000),
-            name="Loan amount is valid between 1000 and 100,000,000 THB",
-          ), 
-          models.CheckConstraint(
-            check = models.Q(loan_term__gte=1) & models.Q(loan_term__lte=50),
-            name="Loan term is valid between 1 and 50 years",
-          ), 
-          models.CheckConstraint(
-            check = models.Q(loan_year__gte=2017) & models.Q(loan_year__lte=2050),
-            name="Start date is valid between Jan 2017 - Dec 2050",
-          ), 
-          models.CheckConstraint(
-            check = models.Q(interest_rate__gte=1) & models.Q(interest_rate__lte=36),
-            name="Interest rate is valid between 1 and 36 percent",
-          ),
-        ]
 
-class RepaymentSchedule(models.Model):
+   
+class Repayment(models.Model):
     """Database model for loan repayment schedule"""
 
-    loan = models.ForeignKey(LoanList, on_delete=models.CASCADE)
+    # Customize database table name
+    class Meta:
+      db_table = 'repayments'
+
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE)
     payment_no = models.IntegerField()
-    date = models.DateTimeField()
+    date = models.DateField()
     payment_amount = models.DecimalField(max_digits=21, decimal_places=6)
     principal = models.DecimalField(max_digits=21, decimal_places=6)
     interest = models.DecimalField(max_digits=21, decimal_places=6)
