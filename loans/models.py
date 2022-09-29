@@ -16,9 +16,9 @@ class Loan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     # Automatically set the field to now every time the object is saved.
     updated_at = models.DateTimeField(auto_now=True)
+  
 
 
-   
 class Repayment(models.Model):
     """Database model for loan repayment schedule"""
 
@@ -38,3 +38,4 @@ class Repayment(models.Model):
     # Automatically set the field to now every time the object is saved.
     updated_at = models.DateTimeField(auto_now=True)
 
+    
