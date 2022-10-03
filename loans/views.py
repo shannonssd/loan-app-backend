@@ -4,10 +4,12 @@ from datetime import datetime
 from dateutil import relativedelta
 from rest_framework.response import Response
 from rest_framework import viewsets
+from rest_framework import status
 from rest_framework.decorators import action
 from .serializers import LoanSerialzier, RepaymentSerialzier
 from django.conf import settings
 from django.utils.timezone import make_aware
+from .helper_functions import handle_repayments
 
 class LoanViewSet(viewsets.ModelViewSet):
     """Views to carry out CRUD operations on loan and repayment tables in db"""
@@ -16,33 +18,53 @@ class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerialzier
 
-
+        
     def create(self, request, *args, **kwargs):
         """Add new loan and repayment details to db"""
 
         try:    
             # Use database transaction to group tasks together
             with transaction.atomic():
-                loan_amount_int = int(request.data['loan_amount'])
-                loan_term_int = int(request.data['loan_term'])
-                interest_rate_float = float(request.data['interest_rate'])
-                loan_month = request.data['loan_month']
-                loan_year = int(request.data['loan_year'])
+                
+                if 'loan_amount' in request.data and 'loan_term' in request.data and 'interest_rate' in request.data and 'loan_month' in request.data and 'loan_year' in request.data: 
+                    
+                    loan_amount_float = float(request.data['loan_amount'])
+                    loan_term_int = int(request.data['loan_term'])
+                    interest_rate_float = float(request.data['interest_rate'])
+                    loan_month = request.data['loan_month']
+                    loan_year = int(request.data['loan_year'])
 
-                new_loan = Loan(
-                    loan_amount = loan_amount_int, 
-                    loan_term = loan_term_int, 
-                    interest_rate = interest_rate_float, 
-                    loan_year = loan_year, 
-                    loan_month = loan_month,
-                    ) 
-                new_loan.save()
+                    
+                    serializer = LoanSerialzier(
+                        data = {
+                        'loan_amount': loan_amount_float, 
+                        'loan_term': loan_term_int, 
+                        'interest_rate': interest_rate_float, 
+                        'loan_year': loan_year, 
+                        'loan_month': loan_month,
+                        }
+                    )
 
-                return handle_repayments(loan_amount_int, loan_term_int, interest_rate_float, loan_month, loan_year, new_loan)
+                    if serializer.is_valid():
+                        new_loan = Loan(
+                            loan_amount = loan_amount_float, 
+                            loan_term = loan_term_int, 
+                            interest_rate = interest_rate_float, 
+                            loan_year = loan_year, 
+                            loan_month = loan_month,
+                            ) 
+                        new_loan.save()
+
+                        return handle_repayments(loan_amount_float, loan_term_int, interest_rate_float, loan_month, loan_year, new_loan)
+
+                    else:
+                        raise Exception(serializer.errors)
+                else:
+                    raise Exception('Missing field')
 
         except Exception as err:
-            print(str(err))
             return Response(str(err))
+
 
 
     def retrieve(self, request, *args, **kwargs):
@@ -94,35 +116,56 @@ class LoanViewSet(viewsets.ModelViewSet):
         """Update repayment and loan details in db"""
 
         try: 
-            # Use database transaction to group tasks together
-            with transaction.atomic():
-                pk = kwargs['pk']
-                # Remove previous repayment entries from db
-                repayment_list = Repayment.objects.filter(loan_id__id = pk)
-                repayment_list.delete()
 
-                # Retrieve and update loan info
-                loan_amount_int = int(request.data['loan_amount'])
-                loan_term_int = int(request.data['loan_term'])
-                interest_rate_float = float(request.data['interest_rate'])
-                loan_month = request.data['loan_month']
-                loan_year = int(request.data['loan_year'])
+            if 'loan_amount' in request.data and 'loan_term' in request.data and 'interest_rate' in request.data and 'loan_month' in request.data and 'loan_year' in request.data: 
+                # Use database transaction to group tasks together
+                with transaction.atomic():
+                    pk = kwargs['pk']
 
-                Loan.objects.filter(id=pk).update(
-                    loan_amount = loan_amount_int, 
-                    loan_term = loan_term_int, 
-                    interest_rate = interest_rate_float, 
-                    loan_year = loan_year, 
-                    loan_month = loan_month,
-                    updated_at = make_aware(datetime.now())
+                    # Retrieve and update loan info
+                    loan_amount_float = float(request.data['loan_amount'])
+                    loan_term_int = int(request.data['loan_term'])
+                    interest_rate_float = float(request.data['interest_rate'])
+                    loan_month = request.data['loan_month']
+                    loan_year = int(request.data['loan_year'])
+
+                    serializer = LoanSerialzier(
+                        data = {
+                        'loan_amount': loan_amount_float, 
+                        'loan_term': loan_term_int, 
+                        'interest_rate': interest_rate_float, 
+                        'loan_year': loan_year, 
+                        'loan_month': loan_month,
+                        }
                     )
-                loan_details = Loan.objects.get(id=pk)
 
-                # Calculate and update repayment details in db
-                return handle_repayments(loan_amount_int, loan_term_int, interest_rate_float, loan_month, loan_year, loan_details)
-        
+                    if serializer.is_valid():
+
+                        # Remove previous repayment entries from db
+                        repayment_list = Repayment.objects.filter(loan_id__id = pk)
+                        repayment_list.delete()
+
+
+                        Loan.objects.filter(id=pk).update(
+                            loan_amount = loan_amount_float, 
+                            loan_term = loan_term_int, 
+                            interest_rate = interest_rate_float, 
+                            loan_year = loan_year, 
+                            loan_month = loan_month,
+                            updated_at = make_aware(datetime.now())
+                            )
+
+                        loan_details = Loan.objects.get(id=pk)
+
+                        # Calculate and update repayment details in db
+                        return handle_repayments(loan_amount_float, loan_term_int, interest_rate_float, loan_month, loan_year, loan_details)
+
+                    else:
+                        raise Exception(serializer.errors)
+            else:
+                raise Exception('Missing field')
+
         except Exception as err:
-            print(str(err))
             return Response(str(err))
 
 
@@ -189,43 +232,5 @@ class LoanViewSet(viewsets.ModelViewSet):
             return Response(filtered_loans_serializer)
 
         except Exception as err:
-                    print(str(err))
-                    return Response(str(err))
-    
-
-def handle_repayments(loan_amount, loan_term, interest_rate_percentage, loan_month, loan_year, loan):
-    """Calculate and store loan repayment schedule in db"""
-
-    interest_rate = interest_rate_percentage / 100
-    pmt = loan_amount * (interest_rate/12) / (1 - ((1 + (interest_rate/12)) ** (-12 * loan_term)))
-    no_of_months = loan_term * 12
-    global balance
-    balance = loan_amount
-
-    repayment_list = []
-    for month in range(1, no_of_months + 1):
-        monthly_repayment = calculate_repayment(interest_rate, pmt, loan, loan_month, loan_year, month)
-        repayment_list.append(monthly_repayment)
-
-    Repayment.objects.bulk_create(repayment_list)
-    loan_serializer =  LoanSerialzier(loan).data
-    pk = loan_serializer['id']
-    return Response(pk)
-
-def calculate_repayment(interest_rate, pmt, loan, loan_month, loan_year, month):
-    """Calculate monthly repayment schedule"""
-    global balance
-    monthly_interest = (interest_rate / 12) * balance
-    principal = pmt - monthly_interest
-    balance = balance - principal
-
-    repayment = Repayment(
-        loan = loan,
-        payment_no = month,
-        date =  datetime(loan_year, int(loan_month), 1) + relativedelta.relativedelta(months=month),
-        payment_amount = pmt,
-        principal = principal,
-        interest = monthly_interest,
-        balance = balance
-    )
-    return repayment
+            print(str(err))
+            return Response(str(err))

@@ -60,6 +60,9 @@ DATABASES = {
         'PORT': os.environ.get("DATABASE_PORT"),
         'USER': os.environ.get("DATABASE_USER"),
         'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
+        'TEST': {
+            'NAME': 'test_my-db'
+        },
     }
 }
 
