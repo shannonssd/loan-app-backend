@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from .serializers import LoanSerialzier, RepaymentSerialzier
 from django.conf import settings
 from django.utils.timezone import make_aware
-from .helper_functions import handle_repayments
+from .helper_functions import calculate_pmt, calculate_repayment
 
 class LoanViewSet(viewsets.ModelViewSet):
     """Views to carry out CRUD operations on loan and repayment tables in db"""
@@ -55,7 +55,42 @@ class LoanViewSet(viewsets.ModelViewSet):
                             ) 
                         new_loan.save()
 
-                        return handle_repayments(loan_amount_float, loan_term_int, interest_rate_float, loan_month, loan_year, new_loan)
+                        # Calculate repayment
+                        interest_rate = interest_rate_float / 100
+                        pmt = calculate_pmt(loan_amount_float, interest_rate, loan_term_int)
+                        no_of_months = loan_term_int * 12
+                        dict = {
+                            'balance': loan_amount_float,
+                        }
+
+                        repayment_list = []
+                        for month in range(1, no_of_months + 1):
+                            monthly_repayment = calculate_repayment(interest_rate, pmt, new_loan, loan_month, loan_year, month, dict)
+                            repayment = Repayment(
+                                loan = monthly_repayment['loan'],
+                                payment_no = monthly_repayment['payment_no'],
+                                date =  monthly_repayment['date'],
+                                payment_amount = monthly_repayment['payment_amount'],
+                                principal = monthly_repayment['principal'],
+                                interest = monthly_repayment['interest'],
+                                balance = monthly_repayment['balance']
+                            )
+                            repayment_list.append(repayment)
+
+                        # Store repayment in db
+                        Repayment.objects.bulk_create(repayment_list)
+                        
+                        loan_serializer =  LoanSerialzier(new_loan).data
+                        pk = loan_serializer['id']
+                        repayment_details = Repayment.objects.filter(loan_id__id = pk)
+                        repayments_serializer = RepaymentSerialzier(repayment_details , many=True).data
+
+                        data = {
+                            'pk': pk,
+                            'loan': loan_serializer,
+                            'repayment list': repayments_serializer
+                        }
+                        return Response(data)
 
                     else:
                         raise Exception(serializer.errors)
@@ -157,8 +192,41 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                         loan_details = Loan.objects.get(id=pk)
 
-                        # Calculate and update repayment details in db
-                        return handle_repayments(loan_amount_float, loan_term_int, interest_rate_float, loan_month, loan_year, loan_details)
+                      # Calculate repayment
+                        interest_rate = interest_rate_float / 100
+                        pmt = calculate_pmt(loan_amount_float, interest_rate, loan_term_int)
+                        no_of_months = loan_term_int * 12
+                        dict = {
+                            'balance': loan_amount_float,
+                        }
+
+                        repayment_list = []
+                        for month in range(1, no_of_months + 1):
+                            monthly_repayment = calculate_repayment(interest_rate, pmt, loan_details, loan_month, loan_year, month, dict)
+                            repayment = Repayment(
+                                loan = monthly_repayment['loan'],
+                                payment_no = monthly_repayment['payment_no'],
+                                date =  monthly_repayment['date'],
+                                payment_amount = monthly_repayment['payment_amount'],
+                                principal = monthly_repayment['principal'],
+                                interest = monthly_repayment['interest'],
+                                balance = monthly_repayment['balance']
+                            )
+                            repayment_list.append(repayment)
+
+                        # Store repayment in db
+                        Repayment.objects.bulk_create(repayment_list)
+                        loan_serializer =  LoanSerialzier(loan_details).data
+                        pk = loan_serializer['id']
+                        repayment_details = Repayment.objects.filter(loan_id__id = pk)
+                        repayments_serializer = RepaymentSerialzier(repayment_details , many=True).data
+
+                        data = {
+                            'pk': pk,
+                            'loan': loan_serializer,
+                            'repayment list': repayments_serializer
+                        }
+                        return Response(data)
 
                     else:
                         raise Exception(serializer.errors)
