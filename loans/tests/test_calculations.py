@@ -20,9 +20,6 @@ class CalculationTests(TestCase):
         # Check if calculated value is expected
         self.assertEqual(test_pmt_rounded, expected_pmt)
 
-    def pmt_calculation_edge_case(self, loan_amount, interest_rate, loan_term):
-        test_pmt = calculate_pmt(loan_amount, interest_rate, loan_term)
-        test_pmt_rounded = round(test_pmt, 6)
 
     
 
