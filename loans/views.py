@@ -65,7 +65,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                         repayment_list = []
                         for month in range(1, no_of_months + 1):
-                            monthly_repayment = calculate_repayment(interest_rate, pmt, new_loan, loan_month, loan_year, month, dict)
+                            monthly_repayment = calculate_repayment(interest_rate, pmt, new_loan, loan_month, loan_year, month, dict, no_of_months)
                             repayment = Repayment(
                                 loan = monthly_repayment['loan'],
                                 payment_no = monthly_repayment['payment_no'],
@@ -202,7 +202,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                         repayment_list = []
                         for month in range(1, no_of_months + 1):
-                            monthly_repayment = calculate_repayment(interest_rate, pmt, loan_details, loan_month, loan_year, month, dict)
+                            monthly_repayment = calculate_repayment(interest_rate, pmt, loan_details, loan_month, loan_year, month, dict, no_of_months)
                             repayment = Repayment(
                                 loan = monthly_repayment['loan'],
                                 payment_no = monthly_repayment['payment_no'],

@@ -21,5 +21,5 @@ class ModelTests(TestCase):
 
         # Check if data is successfully saved in db and if values are correct
         self.assertEqual(Loan.objects.count(), 1)        
-        self.assertEqual(serializer['loan_amount'], '10000.000000')
+        self.assertEqual(serializer['loan_amount'], 10000.00000 )
         self.assertEqual(serializer['loan_term'], 1)

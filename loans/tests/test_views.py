@@ -61,7 +61,7 @@ class ViewTests(TestCase):
 
         # Check if values are correct and if request was resolved successfully
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['loan']['loan_amount'], '10000.000000')        
+        self.assertEqual(response.data['loan']['loan_amount'], 10000.000000)        
 
     def test_loan_destroy_happy_case(self):
         """Test happy case for individual loan deletion: DELETE request"""
@@ -118,7 +118,7 @@ class ViewTests(TestCase):
 
         # Check if values are correct and if request was resolved successfully
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['loan']['loan_amount'], '20000.000000')          
+        self.assertEqual(response.data['loan']['loan_amount'], 20000.000000)          
         self.assertEqual(response.data['loan']['loan_term'], 2)  
 
     def test_loan_edit_retrieval_happy_case(self):
@@ -143,7 +143,7 @@ class ViewTests(TestCase):
 
         # Check if values are correct and if request was resolved successfully
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['loan_amount'], '10000.000000')          
+        self.assertEqual(response.data['loan_amount'], 10000.000000)          
         self.assertEqual(response.data['loan_term'], 1)  
 
 
