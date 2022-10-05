@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import action
-from .serializers import LoanSerialzier, RepaymentSerialzier
+from .serializers import LoanSerializer, RepaymentSerializer
 from django.conf import settings
 from django.utils.timezone import make_aware
 from .helper_functions import calculate_pmt, calculate_repayment
@@ -16,7 +16,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     
     settings.TIME_ZONE
     queryset = Loan.objects.all()
-    serializer_class = LoanSerialzier
+    serializer_class = LoanSerializer
 
         
     def create(self, request, *args, **kwargs):
@@ -35,7 +35,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                     loan_year = int(request.data['loan_year'])
 
                     
-                    serializer = LoanSerialzier(
+                    serializer = LoanSerializer(
                         data = {
                         'loan_amount': loan_amount_float, 
                         'loan_term': loan_term_int, 
@@ -80,10 +80,10 @@ class LoanViewSet(viewsets.ModelViewSet):
                         # Store repayment in db
                         Repayment.objects.bulk_create(repayment_list)
                         
-                        loan_serializer =  LoanSerialzier(new_loan).data
+                        loan_serializer =  LoanSerializer(new_loan).data
                         pk = loan_serializer['id']
                         repayment_details = Repayment.objects.filter(loan_id__id = pk)
-                        repayments_serializer = RepaymentSerialzier(repayment_details , many=True).data
+                        repayments_serializer = RepaymentSerializer(repayment_details , many=True).data
 
                         data = {
                             'pk': pk,
@@ -108,9 +108,9 @@ class LoanViewSet(viewsets.ModelViewSet):
         try: 
             pk = kwargs['pk']
             loan_details = Loan.objects.get(id=pk)
-            loan_serializer =  LoanSerialzier(loan_details).data
+            loan_serializer =  LoanSerializer(loan_details).data
             repayment_details = Repayment.objects.filter(loan_id__id = pk)
-            repayments_serializer = RepaymentSerialzier(repayment_details , many=True).data
+            repayments_serializer = RepaymentSerializer(repayment_details , many=True).data
 
             obj = {
             'loan': loan_serializer,
@@ -139,7 +139,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                 # Retrieve updated list
                 loan_list = Loan.objects.all()
-                loan_list_serializer = LoanSerialzier(loan_list, many=True).data
+                loan_list_serializer = LoanSerializer(loan_list, many=True).data
                 return Response(loan_list_serializer)
 
         except Exception as err:
@@ -164,7 +164,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                     loan_month = request.data['loan_month']
                     loan_year = int(request.data['loan_year'])
 
-                    serializer = LoanSerialzier(
+                    serializer = LoanSerializer(
                         data = {
                         'loan_amount': loan_amount_float, 
                         'loan_term': loan_term_int, 
@@ -216,10 +216,10 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                         # Store repayment in db
                         Repayment.objects.bulk_create(repayment_list)
-                        loan_serializer =  LoanSerialzier(loan_details).data
+                        loan_serializer =  LoanSerializer(loan_details).data
                         pk = loan_serializer['id']
                         repayment_details = Repayment.objects.filter(loan_id__id = pk)
-                        repayments_serializer = RepaymentSerialzier(repayment_details , many=True).data
+                        repayments_serializer = RepaymentSerializer(repayment_details , many=True).data
 
                         data = {
                             'pk': pk,
@@ -244,7 +244,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         try:
             pk = kwargs['pk']
             queryset = Loan.objects.get(id=pk)
-            loan_serializer =  LoanSerialzier(queryset).data
+            loan_serializer =  LoanSerializer(queryset).data
             return Response(loan_serializer)
 
         except Exception as err:
@@ -296,7 +296,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                 interest_rate__lte=interest_rate_upper, 
                 )
 
-            filtered_loans_serializer =  LoanSerialzier(filtered_list, many=True).data
+            filtered_loans_serializer =  LoanSerializer(filtered_list, many=True).data
             return Response(filtered_loans_serializer)
 
         except Exception as err:

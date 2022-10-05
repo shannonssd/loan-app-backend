@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from loans.models import Loan
-from loans.serializers import LoanSerialzier
+from loans.serializers import LoanSerializer
 
 class ViewTests(TestCase):
     """Test for loan views"""
@@ -50,7 +50,7 @@ class ViewTests(TestCase):
             loan_month = 1,
             )   
         new_loan.save()
-        pk = LoanSerialzier(new_loan).data['id']
+        pk = LoanSerializer(new_loan).data['id']
 
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)    
@@ -74,7 +74,7 @@ class ViewTests(TestCase):
             loan_month = 1,
             )   
         new_loan.save()
-        pk = LoanSerialzier(new_loan).data['id']
+        pk = LoanSerializer(new_loan).data['id']
 
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)        
@@ -99,7 +99,7 @@ class ViewTests(TestCase):
             loan_month = 1,
             )   
         new_loan.save()
-        pk = LoanSerialzier(new_loan).data['id']
+        pk = LoanSerializer(new_loan).data['id']
         
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)        
@@ -132,7 +132,7 @@ class ViewTests(TestCase):
             loan_month = 1,
             )   
         new_loan.save()
-        pk = LoanSerialzier(new_loan).data['id']
+        pk = LoanSerializer(new_loan).data['id']
         
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)        

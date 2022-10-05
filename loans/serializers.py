@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Loan, Repayment
 
-class LoanSerialzier(serializers.ModelSerializer):
+class LoanSerializer(serializers.ModelSerializer):
     """Convert data between queryset and python dictionary data type for loan list data"""
 
     class Meta:
@@ -38,7 +38,7 @@ class LoanSerialzier(serializers.ModelSerializer):
         return data
 
 
-class RepaymentSerialzier(serializers.ModelSerializer):
+class RepaymentSerializer(serializers.ModelSerializer):
     """Convert data between queryset and python dictionary data type for repayment schedule data"""
     
     class Meta:

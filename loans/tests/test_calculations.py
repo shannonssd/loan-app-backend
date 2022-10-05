@@ -1,6 +1,6 @@
 from django.test import TestCase 
 from loans.helper_functions import calculate_pmt, calculate_repayment
-from loans.serializers import LoanSerialzier
+from loans.serializers import LoanSerializer
 from loans.models import Loan
 from datetime import datetime
 from dateutil import relativedelta
@@ -59,7 +59,7 @@ class CalculationTests(TestCase):
         new_loan.save()
 
         # Serialize loan to pass to calculate_repayment function
-        serialized_loan = LoanSerialzier(new_loan).data
+        serialized_loan = LoanSerializer(new_loan).data
 
         test_cases = (
             {
@@ -112,7 +112,7 @@ class CalculationTests(TestCase):
         new_loan.save()
 
         # Serialize loan to pass to calculate_repayment function
-        serialized_loan = LoanSerialzier(new_loan).data
+        serialized_loan = LoanSerializer(new_loan).data
 
         test_cases = (
             # Missing field - 'loan_month'
