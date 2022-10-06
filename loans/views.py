@@ -10,6 +10,7 @@ from .serializers import LoanSerializer, RepaymentSerializer
 from django.conf import settings
 from django.utils.timezone import make_aware
 from .helper_functions import calculate_pmt, calculate_repayment
+from decimal import Decimal
 
 class LoanViewSet(viewsets.ModelViewSet):
     """Views to carry out CRUD operations on loan and repayment tables in db"""
@@ -28,18 +29,18 @@ class LoanViewSet(viewsets.ModelViewSet):
                 
                 if 'loan_amount' in request.data and 'loan_term' in request.data and 'interest_rate' in request.data and 'loan_month' in request.data and 'loan_year' in request.data: 
                     
-                    loan_amount_float = float(request.data['loan_amount'])
+                    loan_amount_decimal = Decimal(request.data['loan_amount'])
                     loan_term_int = int(request.data['loan_term'])
-                    interest_rate_float = float(request.data['interest_rate'])
+                    interest_rate_decimal = Decimal(request.data['interest_rate'])
                     loan_month = request.data['loan_month']
                     loan_year = int(request.data['loan_year'])
 
                     
                     serializer = LoanSerializer(
                         data = {
-                        'loan_amount': loan_amount_float, 
+                        'loan_amount': loan_amount_decimal, 
                         'loan_term': loan_term_int, 
-                        'interest_rate': interest_rate_float, 
+                        'interest_rate': interest_rate_decimal, 
                         'loan_year': loan_year, 
                         'loan_month': loan_month,
                         }
@@ -47,20 +48,20 @@ class LoanViewSet(viewsets.ModelViewSet):
 
                     if serializer.is_valid():
                         new_loan = Loan(
-                            loan_amount = loan_amount_float, 
+                            loan_amount = loan_amount_decimal, 
                             loan_term = loan_term_int, 
-                            interest_rate = interest_rate_float, 
+                            interest_rate = interest_rate_decimal, 
                             loan_year = loan_year, 
                             loan_month = loan_month,
                             ) 
                         new_loan.save()
 
                         # Calculate repayment
-                        interest_rate = interest_rate_float / 100
-                        pmt = calculate_pmt(loan_amount_float, interest_rate, loan_term_int)
+                        interest_rate = interest_rate_decimal / 100
+                        pmt = calculate_pmt(loan_amount_decimal, interest_rate, loan_term_int)
                         no_of_months = loan_term_int * 12
                         dict = {
-                            'balance': loan_amount_float,
+                            'balance': loan_amount_decimal,
                         }
 
                         repayment_list = []
@@ -93,7 +94,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                         return Response(data)
 
                     else:
-                        raise Exception(serializer.errors)
+                        raise Exception(serializer.errors['non_field_errors'][0])
                 else:
                     raise Exception('Missing field')
 
@@ -158,17 +159,17 @@ class LoanViewSet(viewsets.ModelViewSet):
                     pk = kwargs['pk']
 
                     # Retrieve and update loan info
-                    loan_amount_float = float(request.data['loan_amount'])
+                    loan_amount_decimal = Decimal(request.data['loan_amount'])
                     loan_term_int = int(request.data['loan_term'])
-                    interest_rate_float = float(request.data['interest_rate'])
+                    interest_rate_decimal = Decimal(request.data['interest_rate'])
                     loan_month = request.data['loan_month']
                     loan_year = int(request.data['loan_year'])
 
                     serializer = LoanSerializer(
                         data = {
-                        'loan_amount': loan_amount_float, 
+                        'loan_amount': loan_amount_decimal, 
                         'loan_term': loan_term_int, 
-                        'interest_rate': interest_rate_float, 
+                        'interest_rate': interest_rate_decimal, 
                         'loan_year': loan_year, 
                         'loan_month': loan_month,
                         }
@@ -182,9 +183,9 @@ class LoanViewSet(viewsets.ModelViewSet):
 
 
                         Loan.objects.filter(id=pk).update(
-                            loan_amount = loan_amount_float, 
+                            loan_amount = loan_amount_decimal, 
                             loan_term = loan_term_int, 
-                            interest_rate = interest_rate_float, 
+                            interest_rate = interest_rate_decimal, 
                             loan_year = loan_year, 
                             loan_month = loan_month,
                             updated_at = make_aware(datetime.now())
@@ -193,11 +194,11 @@ class LoanViewSet(viewsets.ModelViewSet):
                         loan_details = Loan.objects.get(id=pk)
 
                       # Calculate repayment
-                        interest_rate = interest_rate_float / 100
-                        pmt = calculate_pmt(loan_amount_float, interest_rate, loan_term_int)
+                        interest_rate = interest_rate_decimal / 100
+                        pmt = calculate_pmt(loan_amount_decimal, interest_rate, loan_term_int)
                         no_of_months = loan_term_int * 12
                         dict = {
-                            'balance': loan_amount_float,
+                            'balance': loan_amount_decimal,
                         }
 
                         repayment_list = []
@@ -280,12 +281,12 @@ class LoanViewSet(viewsets.ModelViewSet):
             if request.GET['interest_rate_lower'] == 'null':
                 interest_rate_lower = 1.0
             else:
-                interest_rate_lower = float(request.GET['interest_rate_lower'])
+                interest_rate_lower = Decimal(request.GET['interest_rate_lower'])
 
             if request.GET['interest_rate_upper'] == 'null':
                 interest_rate_upper = 36.0
             else:
-                interest_rate_upper = float(request.GET['interest_rate_upper'])
+                interest_rate_upper = Decimal(request.GET['interest_rate_upper'])
 
             filtered_list = Loan.objects.filter(
                 loan_amount__gte=loan_amount_lower, 

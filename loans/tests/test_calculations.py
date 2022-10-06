@@ -30,7 +30,7 @@ class CalculationTests(TestCase):
 
         test_cases = (
             # Non-numeric string - 'loan_amount'
-            {'loan_amount': 'string', 'interest_rate': 0.1, 'loan_term': 1, 'expected_pmt': 879.158872},
+            {'loan_amount': '10 thousand', 'interest_rate': 0.1, 'loan_term': 1, 'expected_pmt': 879.158872},
             # Empty string - 'loan_term'
             {'loan_amount': 10000, 'interest_rate': 0.1, 'loan_term': '', 'expected_pmt': 508.958026},
             # Missing field - 'interest_rate'

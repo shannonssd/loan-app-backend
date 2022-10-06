@@ -10,7 +10,7 @@ class ViewTests(TestCase):
     """Test for loan views"""
 
     def test_loan_list(self):
-        """Test happy case for loan list retrieval: GET request"""
+        """Test happy cases for loan list retrieval: GET request"""
         
         test_cases = (
             # Test retrieval from empty db
@@ -27,6 +27,7 @@ class ViewTests(TestCase):
                 ], 'expected_count': 3,
             },
         )
+
         for test_case in test_cases:
             with self.subTest():
                 
@@ -45,6 +46,7 @@ class ViewTests(TestCase):
                 # Store loan(s) in db
                 Loan.objects.bulk_create(loan_arr)
 
+                # Send GET request
                 url = reverse('loans-list')
                 client = APIClient()
                 response = client.get(url)
@@ -54,7 +56,8 @@ class ViewTests(TestCase):
                 # Check if endpoint response is as expected
                 self.assertEqual(len(response.data), test_case['expected_count'])
 
-    
+
+
     def test_loan_create(self):
         """Test happy case for loan creation: POST request"""
 
@@ -64,12 +67,13 @@ class ViewTests(TestCase):
             {'loan_amount': 40000000, 'loan_term': 4, 'interest_rate': 20, 'loan_year': 2035, 'loan_month': '02', 'repayment_db_count': 660, 'loan_count': 3, 'repayment_response_count': 48},
         )
 
-        url = reverse('loans-list')
-        client = APIClient()
 
         for test_case in test_cases:
             with self.subTest():
 
+                # Send POST request
+                url = reverse('loans-list')
+                client = APIClient()
                 response = client.post(url, test_case)
                 
                 # Check if data saved in db as expected
@@ -84,6 +88,35 @@ class ViewTests(TestCase):
                 self.assertEqual(response.data['loan']['loan_year'], test_case['loan_year'])
                 self.assertEqual(response.data['loan']['loan_month'], test_case['loan_month'])
                 self.assertEqual(len(response.data['repayment list']), test_case['repayment_response_count'])
+
+
+    def test_loan_create_error(self):
+        """Test edge cases for loan list creation: POST request"""
+        
+        test_cases = (
+            # # Non-numeric string - 'loan_amount'
+            # {'loan_amount': '10 thousand', 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12', 'expected_response': "could not convert string to float: '10 thousand'"},
+            # Value out of range - 'loan_amount'
+            {'loan_amount': 10000000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '01', 'expected_response': 'Loan amount is not within the acceptable range of 1000 - 100,000,000 THB.'},
+            # Value out of range - 'loan_term'
+            {'loan_amount': 100000, 'loan_term': 51, 'interest_rate': 20, 'loan_year': 2040, 'loan_month': '01', 'expected_response': 'Loan term is not within the acceptable range of 1 - 50 years.'},
+            # Value out of range - 'interest_rate'
+            {'loan_amount': 100000, 'loan_term': 50, 'interest_rate': 37, 'loan_year': 2040, 'loan_month': '01', 'expected_response': 'Interest rate is not within the acceptable range of 1 - 36%.'},
+            # Value out of range - 'start date'
+            {'loan_amount': 100000, 'loan_term': 50, 'interest_rate': 30, 'loan_year': 2051, 'loan_month': '01', 'expected_response': 'Loan start date is not within the acceptable range of 2017-2050.'},
+            # Missing field- 'interest_rate'
+            {'loan_amount': 'fifty thousand', 'loan_term': 50, 'loan_year': 2040, 'loan_month': '12', 'expected_response': 'Missing field'},
+        )
+
+        for test_case in test_cases:
+            with self.subTest():
+               
+                # Send POST request
+                url = reverse('loans-list')
+                client = APIClient()
+                response = client.post(url, test_case)
+
+                self.assertEqual(response.data, test_case['expected_response'])
 
     def test_loan_retrieve_happy_case(self):
         """Test happy case for individual loan retrieval: GET request"""
@@ -101,6 +134,7 @@ class ViewTests(TestCase):
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)    
 
+        # Send GET request
         client = APIClient()
         url = reverse('loans-detail', kwargs={'pk': pk})
         response = client.get(url)
@@ -125,6 +159,7 @@ class ViewTests(TestCase):
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)        
 
+        # Send DELETE request
         client = APIClient()
         url = reverse('loans-detail', kwargs={'pk': pk})
         response = client.delete(url)
@@ -158,6 +193,7 @@ class ViewTests(TestCase):
             'loan_year': '2020'
         }
 
+        # Send PUT request
         client = APIClient()
         url = reverse('loans-detail', kwargs={'pk': pk})
         response = client.put(url, data)
@@ -183,6 +219,7 @@ class ViewTests(TestCase):
         # Check if data is saved successfully in db
         self.assertEqual(Loan.objects.count(), 1)        
 
+        # Send GET request
         client = APIClient()
         url = reverse('loans-edit', kwargs={'pk': pk})
         response = client.get(url)

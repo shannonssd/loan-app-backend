@@ -1,6 +1,7 @@
 from django.test import TestCase 
 from loans.models import Loan, Repayment
 from loans.serializers import LoanSerializer, RepaymentSerializer
+from decimal import Decimal
 
 class ModelTests(TestCase):
     """Test for loan models"""
@@ -39,7 +40,7 @@ class ModelTests(TestCase):
         """Test for adding repayments to db"""
 
         test_cases = (
-            {'loan_amount': 10000, 'loan_term': 1, 'interest_rate': 10, 'loan_year': 2022, 'loan_month': '01', 'payment_no': 1, 'date': '2022-2-1', 'payment_amount': 879.158872, 'principal': 795.825539, 'interest': 83.333333, 'balance': 9204.174461,},
+            {'loan_amount': 10000, 'loan_term': 1, 'interest_rate': 10, 'loan_year': 2022, 'loan_month': '01', 'payment_no': 1, 'date': '2022-2-1', 'payment_amount': round(Decimal(879.158872), 6), 'principal': round(Decimal(795.825539), 6), 'interest': round(Decimal(83.333333), 6), 'balance': round(Decimal(9204.174461), 6),},
         )
 
         for test_case in test_cases:
@@ -67,8 +68,6 @@ class ModelTests(TestCase):
                 new_repayment.save()
                 repayment_serializer = RepaymentSerializer(new_repayment).data
 
-                print(repayment_serializer)
-                
                 # Check if data is successfully saved in db 
                 self.assertEqual(Loan.objects.count(), 1)        
                 # Check if foreign key value is as expected
@@ -76,11 +75,7 @@ class ModelTests(TestCase):
                 # Check if values are as expected
                 self.assertEqual(repayment_serializer['payment_no'], test_case['payment_no'])
                 self.assertEqual(repayment_serializer['date'], test_case['date'])
-                
-                ### AssertionError: Decimal('879.158872') != 879.158872 ###
-                ### Assertion error for all Decimal fields ###
-
-                # self.assertEqual(repayment_serializer['payment_amount'], test_case['payment_amount'])
-                # self.assertEqual(repayment_serializer['principal'], test_case['principal'])                
-                # self.assertEqual(repayment_serializer['interest'], test_case['interest'])                
-                # self.assertEqual(repayment_serializer['balance'], test_case['balance'])
+                self.assertEqual(repayment_serializer['payment_amount'], test_case['payment_amount'])
+                self.assertEqual(repayment_serializer['principal'], test_case['principal'])
+                self.assertEqual(repayment_serializer['interest'], test_case['interest'])
+                self.assertEqual(repayment_serializer['balance'], test_case['balance'])
