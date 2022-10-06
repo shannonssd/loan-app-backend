@@ -3,10 +3,11 @@ from loans.helper_functions import calculate_pmt, calculate_repayment
 from loans.serializers import LoanSerializer
 from loans.models import Loan
 from datetime import datetime
-from dateutil import relativedelta
+
 
 class CalculationTests(TestCase):
     """Tests for calculations"""
+
 
     def test_calculate_pmt(self):
         """Test happy cases for PMT calculation"""
@@ -42,7 +43,6 @@ class CalculationTests(TestCase):
                 # Check if error is raised as expected
                 with self.assertRaises(Exception):
                     calculate_pmt(test_case['loan_amount'], test_case['interest_rate'], test_case['loan_term'])
-
 
 
     def test_calculate_repayment(self):

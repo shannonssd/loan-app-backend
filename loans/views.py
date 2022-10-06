@@ -99,7 +99,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                     raise Exception('Missing field')
 
         except Exception as err:
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -122,7 +122,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
         except Exception as err:
             print(str(err))
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
 
 
     def destroy(self, request, *args, **kwargs):
@@ -145,7 +145,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
         except Exception as err:
             print(str(err))
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
 
 
     def update(self, request, *args, **kwargs):
@@ -235,7 +235,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                 raise Exception('Missing field')
 
         except Exception as err:
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
 
 
     @action(detail=True, methods=['GET'])
@@ -250,7 +250,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
         except Exception as err:
             print(str(err))
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
 
 
     @action(detail=False, methods=['GET'])
@@ -302,4 +302,4 @@ class LoanViewSet(viewsets.ModelViewSet):
 
         except Exception as err:
             print(str(err))
-            return Response(str(err))
+            return Response(str(err), status=status.HTTP_404_NOT_FOUND)
