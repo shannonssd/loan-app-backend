@@ -2,42 +2,88 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from loans.models import Loan
+from loans.models import Loan, Repayment
 from loans.serializers import LoanSerializer
+
 
 class ViewTests(TestCase):
     """Test for loan views"""
 
-    def test_loan_list_happy_case(self):
+    def test_loan_list(self):
         """Test happy case for loan list retrieval: GET request"""
+        
+        test_cases = (
+            # Test retrieval from empty db
+            {
+                'loan_list': [], 'expected_count': 0
+            },
+            # Test retrieval from db with existing loans
+            {
+                'loan_list': 
+                [
+                    {'loan_amount': 100000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12',},
+                    {'loan_amount': 10000, 'loan_term': 1, 'interest_rate': 10, 'loan_year': 2022, 'loan_month': '01',},
+                    {'loan_amount': 50000, 'loan_term': 4, 'interest_rate': 20, 'loan_year': 2024, 'loan_month': '07',},
+                ], 'expected_count': 3,
+            },
+        )
+        for test_case in test_cases:
+            with self.subTest():
+                
+                # Add loans to Loan model
+                loan_arr = []
+                for loan in test_case['loan_list']:
+                    new_loan = Loan(
+                        loan_amount = loan['loan_amount'], 
+                        loan_term = loan['loan_term'], 
+                        interest_rate = loan['interest_rate'], 
+                        loan_year = loan['loan_year'], 
+                        loan_month = loan['loan_month'], 
+                    ) 
+                    loan_arr.append(new_loan)
 
-        url = reverse('loans-list')
-        client = APIClient()
-        response = client.get(url)
+                # Store loan(s) in db
+                Loan.objects.bulk_create(loan_arr)
 
-        # Test if request was resolved successfully
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+                url = reverse('loans-list')
+                client = APIClient()
+                response = client.get(url)
+
+                # Check if request was resolved successfully
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # Check if endpoint response is as expected
+                self.assertEqual(len(response.data), test_case['expected_count'])
 
     
-    def test_loan_create_happy_case(self):
+    def test_loan_create(self):
         """Test happy case for loan creation: POST request"""
 
-        url = reverse('loans-list')
-        data = {
-            'loan_amount': '10000',
-            'loan_term': '1',
-            'interest_rate': '10',
-            'loan_month': '02',
-            'loan_year': '2022'
-        }
-        client = APIClient()
-        response = client.post(url, data)
+        test_cases = (
+            {'loan_amount': 100000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12', 'repayment_db_count': 600, 'loan_count': 1, 'repayment_response_count': 600},
+            {'loan_amount': 10000, 'loan_term': 1, 'interest_rate': 10, 'loan_year': 2020, 'loan_month': '10', 'repayment_db_count': 612, 'loan_count': 2, 'repayment_response_count': 12},
+            {'loan_amount': 40000000, 'loan_term': 4, 'interest_rate': 20, 'loan_year': 2035, 'loan_month': '02', 'repayment_db_count': 660, 'loan_count': 3, 'repayment_response_count': 48},
+        )
 
-        # Check if data is successfully saved in db, if values are correct and if request was resolved successfully
-        self.assertEqual(Loan.objects.count(), 1)        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Loan.objects.get().loan_amount, 10000)
-        self.assertEqual(Loan.objects.get().loan_term, 1)
+        url = reverse('loans-list')
+        client = APIClient()
+
+        for test_case in test_cases:
+            with self.subTest():
+
+                response = client.post(url, test_case)
+                
+                # Check if data saved in db as expected
+                self.assertEqual(Loan.objects.count(), test_case['loan_count'])   
+                self.assertEqual(Repayment.objects.count(), test_case['repayment_db_count'])
+                # Check if request was resolved successfully     
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # Check if endpoint response is as expected
+                self.assertEqual(response.data['loan']['loan_amount'], test_case['loan_amount'])
+                self.assertEqual(response.data['loan']['loan_term'], test_case['loan_term'])
+                self.assertEqual(response.data['loan']['interest_rate'], test_case['interest_rate'])
+                self.assertEqual(response.data['loan']['loan_year'], test_case['loan_year'])
+                self.assertEqual(response.data['loan']['loan_month'], test_case['loan_month'])
+                self.assertEqual(len(response.data['repayment list']), test_case['repayment_response_count'])
 
     def test_loan_retrieve_happy_case(self):
         """Test happy case for individual loan retrieval: GET request"""
