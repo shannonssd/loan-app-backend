@@ -258,47 +258,53 @@ class LoanViewSet(viewsets.ModelViewSet):
         """Filter loans"""
 
         try:
-            if request.GET['loan_amount_lower'] == 'null':
-                loan_amount_lower = 1000 
+
+            if 'loan_amount_lower' in request.GET and 'loan_amount_upper' in request.GET and 'loan_term_lower' in request.GET and 'loan_term_upper' in request.GET and 'interest_rate_lower' in request.GET and 'interest_rate_upper' in request.GET: 
+
+                if request.GET['loan_amount_lower'] == 'null':
+                    loan_amount_lower = 1000 
+                else:
+                    loan_amount_lower = int(request.GET['loan_amount_lower'])
+
+                if request.GET['loan_amount_upper'] == 'null':
+                    loan_amount_upper = 100000000 
+                else:
+                    loan_amount_upper = int(request.GET['loan_amount_upper'])
+
+                if request.GET['loan_term_lower'] == 'null':
+                    loan_term_lower = 1 
+                else:
+                    loan_term_lower = int(request.GET['loan_term_lower'])
+
+                if request.GET['loan_term_upper'] == 'null':
+                    loan_term_upper = 50 
+                else:
+                    loan_term_upper = int(request.GET['loan_term_upper'])
+
+                if request.GET['interest_rate_lower'] == 'null':
+                    interest_rate_lower = 1.0
+                else:
+                    interest_rate_lower = Decimal(request.GET['interest_rate_lower'])
+
+                if request.GET['interest_rate_upper'] == 'null':
+                    interest_rate_upper = 36.0
+                else:
+                    interest_rate_upper = Decimal(request.GET['interest_rate_upper'])
+
+                filtered_list = Loan.objects.filter(
+                    loan_amount__gte=loan_amount_lower, 
+                    loan_amount__lte=loan_amount_upper, 
+                    loan_term__gte=loan_term_lower, 
+                    loan_term__lte=loan_term_upper, 
+                    interest_rate__gte=interest_rate_lower, 
+                    interest_rate__lte=interest_rate_upper, 
+                    )
+
+                filtered_loans_serializer =  LoanSerializer(filtered_list, many=True).data
+                return Response(filtered_loans_serializer)
+
             else:
-                loan_amount_lower = int(request.GET['loan_amount_lower'])
-
-            if request.GET['loan_amount_upper'] == 'null':
-                loan_amount_upper = 100000000 
-            else:
-                loan_amount_upper = int(request.GET['loan_amount_upper'])
-
-            if request.GET['loan_term_lower'] == 'null':
-                loan_term_lower = 1 
-            else:
-                loan_term_lower = int(request.GET['loan_term_lower'])
-
-            if request.GET['loan_term_upper'] == 'null':
-                loan_term_upper = 50 
-            else:
-                loan_term_upper = int(request.GET['loan_term_upper'])
-
-            if request.GET['interest_rate_lower'] == 'null':
-                interest_rate_lower = 1.0
-            else:
-                interest_rate_lower = Decimal(request.GET['interest_rate_lower'])
-
-            if request.GET['interest_rate_upper'] == 'null':
-                interest_rate_upper = 36.0
-            else:
-                interest_rate_upper = Decimal(request.GET['interest_rate_upper'])
-
-            filtered_list = Loan.objects.filter(
-                loan_amount__gte=loan_amount_lower, 
-                loan_amount__lte=loan_amount_upper, 
-                loan_term__gte=loan_term_lower, 
-                loan_term__lte=loan_term_upper, 
-                interest_rate__gte=interest_rate_lower, 
-                interest_rate__lte=interest_rate_upper, 
-                )
-
-            filtered_loans_serializer =  LoanSerializer(filtered_list, many=True).data
-            return Response(filtered_loans_serializer)
+                raise Exception('Missing field')
 
         except Exception as err:
             print(str(err))
