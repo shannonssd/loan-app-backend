@@ -230,7 +230,7 @@ class LoanViewSet(viewsets.ModelViewSet):
                         return Response(data)
 
                     else:
-                        raise Exception(serializer.errors)
+                        raise Exception(serializer.errors['non_field_errors'][0])
             else:
                 raise Exception('Missing field')
 

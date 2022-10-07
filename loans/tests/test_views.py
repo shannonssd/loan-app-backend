@@ -95,8 +95,10 @@ class ViewTests(TestCase):
         """Test edge cases for loan list creation: POST request"""
         
         test_cases = (
-            # Non-numeric string - 'loan_amount'
-            {'loan_amount': '10 thousand', 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12', 'expected_response': "[<class 'decimal.ConversionSyntax'>]"},
+            # Non-numeric string (Decimal field) - 'loan_amount'
+            {'loan_amount': 'ten thousand', 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12', 'expected_response': "[<class 'decimal.ConversionSyntax'>]"},
+            # Non-numeric string (Integer field) - 'loan_term'
+            {'loan_amount': 10000000, 'loan_term': 'fifty', 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12', 'expected_response': "invalid literal for int() with base 10: 'fifty'"},
             # Value out of range - 'loan_amount'
             {'loan_amount': 10000000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '01', 'expected_response': 'Loan amount is not within the acceptable range of 1000 - 100,000,000 THB.'},
             # Value out of range - 'loan_term'
@@ -406,11 +408,13 @@ class ViewTests(TestCase):
                 self.assertEqual(response.data['loan']['loan_month'], test_case['test_loan_new']['loan_month'])
                 self.assertEqual(len(response.data['repayment list']), test_case['repayment_response_count']) 
 
+
     def test_loan_update_error(self):
         """Test edge cases for updating loan data in db: PUT request"""
 
         test_cases = (
             {
+                # Test pk which doesn't exist
                 'test_loan': {
                 'loan_amount': 100000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12',
                 },
@@ -421,24 +425,113 @@ class ViewTests(TestCase):
                 'loan_amount': 400000, 'loan_term': 2, 'interest_rate': 10, 'loan_year': 2020, 'loan_month': '1',
                 },
                 'repayment_db_count': 600,
-                # Test pk which doesn't exist
-                'non_existent_pk': 3,
+                'pk': 10,
                 'expected_response': 'Loan matching query does not exist.',
             },
             {
+                # Test non-numeric string (Decimal field) - 'loan_amount'
                 'test_loan': {
-                'loan_amount': 25000000, 'loan_term': 20, 'interest_rate': 29, 'loan_year': 2023, 'loan_month': '2',
+                'loan_amount': 1000000, 'loan_term': 20, 'interest_rate': 29, 'loan_year': 2023, 'loan_month': '2',
                 },
                 'test_loan_new': {
-                'loan_amount': 100000, 'loan_term': 9, 'interest_rate': 14, 'loan_year': 2024, 'loan_month': '3',
+                'loan_amount': 'ten thousand', 'loan_term': 9, 'interest_rate': 14, 'loan_year': 2024, 'loan_month': '3',
                 },
                 'extra_loan': {
                 'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
                 },
                 'repayment_db_count': 240,
-                # Test pk which doesn't exist
-                'non_existent_pk': 5,
-                'expected_response': 'Loan matching query does not exist.',
+                'pk': '',
+                'expected_response': "[<class 'decimal.ConversionSyntax'>]",
+            },
+            {
+                # Test non-numeric string (Integer field) - 'loan_term'
+                'test_loan': {
+                'loan_amount': 10000000, 'loan_term': 20, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '12',
+                },
+                'test_loan_new': {
+                'loan_amount': 100000, 'loan_term': 'fifty', 'interest_rate': 14, 'loan_year': 2024, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': "invalid literal for int() with base 10: 'fifty'",
+            },
+            {
+                # Test value out of range - 'loan_amount'
+                'test_loan': {
+                'loan_amount': 1000000, 'loan_term': 50, 'interest_rate': 36, 'loan_year': 2040, 'loan_month': '01',
+                },
+                'test_loan_new': {
+                'loan_amount': 10000000000, 'loan_term': 9, 'interest_rate': 14, 'loan_year': 2024, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': 'Loan amount is not within the acceptable range of 1000 - 100,000,000 THB.',
+            },
+            {
+                # Test value out of range - 'loan_term'
+                'test_loan': {
+                'loan_amount': 100000, 'loan_term': 40, 'interest_rate': 20, 'loan_year': 2040, 'loan_month': '01',
+                },
+                'test_loan_new': {
+                'loan_amount': 100000, 'loan_term': 51, 'interest_rate': 14, 'loan_year': 2024, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': 'Loan term is not within the acceptable range of 1 - 50 years.',
+            },
+            {
+                # Test value out of range - 'interest_rate'
+                'test_loan': {
+                'loan_amount': 100000, 'loan_term': 50, 'interest_rate': 30, 'loan_year': 2040, 'loan_month': '01',
+                },
+                'test_loan_new': {
+                'loan_amount': 100000, 'loan_term': 9, 'interest_rate': 37, 'loan_year': 2024, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': 'Interest rate is not within the acceptable range of 1 - 36%.',
+            },
+            {
+                # Test value out of range - 'start date'
+                'test_loan': {
+                'loan_amount': 100000, 'loan_term': 50, 'interest_rate': 30, 'loan_year': 2022, 'loan_month': '01',
+                },
+                'test_loan_new': {
+                'loan_amount': 100000, 'loan_term': 9, 'interest_rate': 14, 'loan_year': 2016, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': 'Loan start date is not within the acceptable range of 2017-2050.',
+            },
+            {
+                # Test missing field- 'interest_rate'
+                'test_loan': {
+                'loan_amount': 100000, 'loan_term': 50, 'interest_rate': 14, 'loan_year': 2022, 'loan_month': '01',
+                },
+                'test_loan_new': {
+                'loan_amount': 100000, 'loan_term': 9, 'loan_year': 2022, 'loan_month': '3',
+                },
+                'extra_loan': {
+                'loan_amount': 55000, 'loan_term': 4, 'interest_rate': 9, 'loan_year': 2023, 'loan_month': '4',
+                },
+                'repayment_db_count': 240,
+                'pk': '',
+                'expected_response': 'Missing field',
             },
         )
 
@@ -448,12 +541,17 @@ class ViewTests(TestCase):
                 # Make post requests to add test data to db
                 client = APIClient()
                 post_url = reverse('loans-list')
-                client.post(post_url, test_case['test_loan'])
+                post_response = client.post(post_url, test_case['test_loan'])
                 client.post(post_url, test_case['extra_loan'])
+
+                if (test_case['pk'] == ''):
+                    pk = post_response.data['loan']['id']
+                else:
+                    pk = test_case['pk']
 
                 # Send PUT request
                 # Use non-existent primary key in url path
-                url = reverse('loans-detail', kwargs={'pk': test_case['non_existent_pk']})
+                url = reverse('loans-detail', kwargs={'pk': pk})
                 response = client.put(url, test_case['test_loan_new'])
 
                 # Check if request was resolved as expected    
